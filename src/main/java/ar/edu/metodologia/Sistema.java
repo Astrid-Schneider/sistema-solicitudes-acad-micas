@@ -28,11 +28,12 @@ public class Sistema {
         proximoEstudiante++;
     }
 
-    public void registrarSolicitud(int estudianteId, String tipo, String descripcion, String prioridad, String estado, Responsable responsable) {
-        Estudiante e = null;
-        for (Estudiante x : estudiantes) if (x.getId() == estudianteId) e = x;
-        if (e != null) {
-            solicitudes.add(new Solicitud(proximaSolicitud, e, tipo, descripcion, prioridad, estado, responsable));
+    public void registrarSolicitud(int estudianteId, String tipo, String descripcion, String prioridad,
+                                   String estado, Responsable responsable) {
+        Estudiante estudianteEncontrado = buscarEstudiantePorId(estudianteId);
+        if (estudianteEncontrado != null) {
+            solicitudes.add(new Solicitud(proximaSolicitud, estudianteEncontrado, tipo, descripcion,
+                    prioridad, estado, responsable));
             proximaSolicitud++;
         }
     }
@@ -40,24 +41,52 @@ public class Sistema {
     public void iniciar() {
         int opcion = -1;
         while (opcion != 0) {
-            System.out.println("\n=== SISTEMA DE SOLICITUDES ACADÉMICAS ===");
-            System.out.println("1. Registrar estudiante\n2. Registrar solicitud\n3. Listar solicitudes");
-            System.out.println("4. Consultar solicitud por ID\n5. Buscar por estado\n6. Buscar por tipo");
-            System.out.println("7. Asignar responsable\n8. Cambiar estado\n9. Reporte por estado\n0. Salir");
-            System.out.print("Opción: ");
-            try { opcion = Integer.parseInt(teclado.nextLine()); }
-            catch (NumberFormatException ex) { opcion = -1; }
-            if (opcion == 1) altaEstudiante();
-            else if (opcion == 2) altaSolicitud();
-            else if (opcion == 3) listarSolicitudes();
-            else if (opcion == 4) consultarSolicitud();
-            else if (opcion == 5) buscarPorEstado();
-            else if (opcion == 6) buscarPorTipo();
-            else if (opcion == 7) asignarResponsable();
-            else if (opcion == 8) cambiarEstado();
-            else if (opcion == 9) mostrarReporte();
-            else if (opcion == 0) System.out.println("Hasta luego.");
-            else System.out.println("Opción inválida.");
+            mostrarMenu();
+            Integer numeroIngresado = leerNumero();
+            opcion = numeroIngresado == null ? -1 : numeroIngresado;
+            ejecutarOpcion(opcion);
+        }
+    }
+
+    private void mostrarMenu() {
+        System.out.println("\n=== SISTEMA DE SOLICITUDES ACADÉMICAS ===");
+        System.out.println("1. Registrar estudiante\n2. Registrar solicitud\n3. Listar solicitudes");
+        System.out.println("4. Consultar solicitud por ID\n5. Buscar por estado\n6. Buscar por tipo");
+        System.out.println("7. Asignar responsable\n8. Cambiar estado\n9. Reporte por estado\n0. Salir");
+        System.out.print("Opción: ");
+    }
+
+    private void ejecutarOpcion(int opcion) {
+        if (opcion == 1) {
+            altaEstudiante();
+        } else if (opcion == 2) {
+            altaSolicitud();
+        } else if (opcion == 3) {
+            listarSolicitudes();
+        } else if (opcion == 4) {
+            consultarSolicitud();
+        } else if (opcion == 5) {
+            buscarPorEstado();
+        } else if (opcion == 6) {
+            buscarPorTipo();
+        } else if (opcion == 7) {
+            asignarResponsable();
+        } else if (opcion == 8) {
+            cambiarEstado();
+        } else if (opcion == 9) {
+            mostrarReporte();
+        } else if (opcion == 0) {
+            System.out.println("Hasta luego.");
+        } else {
+            System.out.println("Opción inválida.");
+        }
+    }
+
+    private Integer leerNumero() {
+        try {
+            return Integer.parseInt(teclado.nextLine());
+        } catch (NumberFormatException entradaInvalida) {
+            return null;
         }
     }
 
@@ -66,106 +95,209 @@ public class Sistema {
         String nombre = teclado.nextLine().trim();
         System.out.print("Email: ");
         String email = teclado.nextLine().trim();
-        if (nombre.isEmpty() || email.isEmpty() || !email.contains("@"))
+        if (nombre.isEmpty() || email.isEmpty() || !email.contains("@")) {
             System.out.println("Datos inválidos. El nombre y el email son obligatorios.");
-        else {
+        } else {
             registrarEstudiante(nombre, email);
             System.out.println("Estudiante registrado correctamente.");
         }
     }
 
     private void altaSolicitud() {
-        for (Estudiante e : estudiantes) System.out.println(e);
+        mostrarEstudiantes();
         System.out.print("ID del estudiante: ");
-        int id;
-        try { id = Integer.parseInt(teclado.nextLine()); }
-        catch (NumberFormatException ex) { System.out.println("ID inválido."); return; }
-        Estudiante encontrado = null;
-        for (Estudiante e : estudiantes) if (e.getId() == id) encontrado = e;
-        if (encontrado == null) { System.out.println("No existe el estudiante."); return; }
+        Integer estudianteId = leerNumero();
+        if (estudianteId == null) {
+            System.out.println("ID inválido.");
+            return;
+        }
+
+        Estudiante estudianteEncontrado = buscarEstudiantePorId(estudianteId);
+        if (estudianteEncontrado == null) {
+            System.out.println("No existe el estudiante.");
+            return;
+        }
+
+        registrarSolicitudDesdeConsola(estudianteId);
+    }
+
+    private void mostrarEstudiantes() {
+        for (Estudiante estudiante : estudiantes) {
+            System.out.println(estudiante);
+        }
+    }
+
+    private Estudiante buscarEstudiantePorId(int estudianteId) {
+        Estudiante estudianteEncontrado = null;
+        for (Estudiante estudiante : estudiantes) {
+            if (estudiante.getId() == estudianteId) {
+                estudianteEncontrado = estudiante;
+            }
+        }
+        return estudianteEncontrado;
+    }
+
+    private void registrarSolicitudDesdeConsola(int estudianteId) {
         System.out.print("Tipo (CERTIFICADO/EQUIVALENCIA/EXAMEN/OTRA): ");
         String tipo = teclado.nextLine().trim().toUpperCase();
         System.out.print("Descripción: ");
         String descripcion = teclado.nextLine().trim();
         System.out.print("Prioridad (BAJA/MEDIA/ALTA): ");
         String prioridad = teclado.nextLine().trim().toUpperCase();
-        if (tipo.isEmpty() || descripcion.isEmpty() || !(prioridad.equals("BAJA") || prioridad.equals("MEDIA") || prioridad.equals("ALTA"))) {
-            System.out.println("Tipo, descripción o prioridad inválidos."); return;
+        if (!datosSolicitudValidos(tipo, descripcion, prioridad)) {
+            System.out.println("Tipo, descripción o prioridad inválidos.");
+            return;
         }
-        registrarSolicitud(id, tipo, descripcion, prioridad, "PENDIENTE", null);
+
+        registrarSolicitud(estudianteId, tipo, descripcion, prioridad, "PENDIENTE", null);
         System.out.println("Solicitud registrada correctamente.");
     }
 
+    private boolean datosSolicitudValidos(String tipo, String descripcion, String prioridad) {
+        return !tipo.isEmpty()
+                && !descripcion.isEmpty()
+                && (prioridad.equals("BAJA") || prioridad.equals("MEDIA") || prioridad.equals("ALTA"));
+    }
+
     private void listarSolicitudes() {
-        if (solicitudes.isEmpty()) System.out.println("No hay solicitudes.");
-        for (Solicitud s : solicitudes) System.out.println(s);
+        if (solicitudes.isEmpty()) {
+            System.out.println("No hay solicitudes.");
+        }
+        for (Solicitud solicitud : solicitudes) {
+            System.out.println(solicitud);
+        }
+    }
+
+    private Solicitud buscarSolicitudPorId(int solicitudId) {
+        Solicitud solicitudEncontrada = null;
+        for (Solicitud solicitud : solicitudes) {
+            if (solicitud.getId() == solicitudId) {
+                solicitudEncontrada = solicitud;
+            }
+        }
+        return solicitudEncontrada;
     }
 
     private void consultarSolicitud() {
         System.out.print("ID de la solicitud: ");
-        int id;
-        try { id = Integer.parseInt(teclado.nextLine()); }
-        catch (NumberFormatException ex) { System.out.println("ID inválido."); return; }
-        Solicitud x = null;
-        for (Solicitud s : solicitudes) if (s.getId() == id) x = s;
-        if (x == null) System.out.println("No existe la solicitud."); else System.out.println(x);
+        Integer solicitudId = leerNumero();
+        if (solicitudId == null) {
+            System.out.println("ID inválido.");
+            return;
+        }
+
+        Solicitud solicitudEncontrada = buscarSolicitudPorId(solicitudId);
+        if (solicitudEncontrada == null) {
+            System.out.println("No existe la solicitud.");
+        } else {
+            System.out.println(solicitudEncontrada);
+        }
     }
 
     private void buscarPorEstado() {
         System.out.print("Estado (PENDIENTE/EN_PROCESO/RESUELTA): ");
-        String valor = teclado.nextLine().trim().toUpperCase();
-        boolean hay = false;
-        for (Solicitud s : solicitudes) if (s.getEstado().equals(valor)) { System.out.println(s); hay = true; }
-        if (!hay) System.out.println("No se encontraron solicitudes.");
+        String estadoBuscado = teclado.nextLine().trim().toUpperCase();
+        boolean haySolicitudes = false;
+        for (Solicitud solicitud : solicitudes) {
+            if (solicitud.getEstado().equals(estadoBuscado)) {
+                System.out.println(solicitud);
+                haySolicitudes = true;
+            }
+        }
+        if (!haySolicitudes) {
+            System.out.println("No se encontraron solicitudes.");
+        }
     }
 
     private void buscarPorTipo() {
         System.out.print("Tipo a buscar: ");
-        String valor = teclado.nextLine().trim().toUpperCase();
-        boolean hay = false;
-        for (Solicitud s : solicitudes) if (s.getTipo().equals(valor)) { System.out.println(s); hay = true; }
-        if (!hay) System.out.println("No se encontraron solicitudes.");
+        String tipoBuscado = teclado.nextLine().trim().toUpperCase();
+        boolean haySolicitudes = false;
+        for (Solicitud solicitud : solicitudes) {
+            if (solicitud.getTipo().equals(tipoBuscado)) {
+                System.out.println(solicitud);
+                haySolicitudes = true;
+            }
+        }
+        if (!haySolicitudes) {
+            System.out.println("No se encontraron solicitudes.");
+        }
     }
 
     private void asignarResponsable() {
         System.out.print("ID de la solicitud: ");
-        int id;
-        try { id = Integer.parseInt(teclado.nextLine()); }
-        catch (NumberFormatException ex) { System.out.println("ID inválido."); return; }
-        Solicitud solicitud = null;
-        for (Solicitud s : solicitudes) if (s.getId() == id) solicitud = s;
-        if (solicitud == null) { System.out.println("No existe la solicitud."); return; }
-        for (Responsable r : responsables) System.out.println(r);
+        Integer solicitudId = leerNumero();
+        if (solicitudId == null) {
+            System.out.println("ID inválido.");
+            return;
+        }
+
+        Solicitud solicitudEncontrada = buscarSolicitudPorId(solicitudId);
+        if (solicitudEncontrada == null) {
+            System.out.println("No existe la solicitud.");
+            return;
+        }
+        for (Responsable responsable : responsables) {
+            System.out.println(responsable);
+        }
         System.out.print("ID del responsable: ");
-        int responsableId;
-        try { responsableId = Integer.parseInt(teclado.nextLine()); }
-        catch (NumberFormatException ex) { System.out.println("ID inválido."); return; }
-        Responsable responsable = null;
-        for (Responsable r : responsables) if (r.getId() == responsableId) responsable = r;
-        if (responsable == null) System.out.println("No existe el responsable.");
-        else { solicitud.setResponsable(responsable); System.out.println("Responsable asignado correctamente."); }
+        Integer responsableId = leerNumero();
+        if (responsableId == null) {
+            System.out.println("ID inválido.");
+            return;
+        }
+
+        Responsable responsableEncontrado = null;
+        for (Responsable responsable : responsables) {
+            if (responsable.getId() == responsableId) {
+                responsableEncontrado = responsable;
+            }
+        }
+        if (responsableEncontrado == null) {
+            System.out.println("No existe el responsable.");
+        } else {
+            solicitudEncontrada.setResponsable(responsableEncontrado);
+            System.out.println("Responsable asignado correctamente.");
+        }
     }
 
     private void cambiarEstado() {
         System.out.print("ID de la solicitud: ");
-        int id;
-        try { id = Integer.parseInt(teclado.nextLine()); }
-        catch (NumberFormatException ex) { System.out.println("ID inválido."); return; }
-        Solicitud solicitud = null;
-        for (Solicitud s : solicitudes) if (s.getId() == id) solicitud = s;
-        if (solicitud == null) { System.out.println("No existe la solicitud."); return; }
+        Integer solicitudId = leerNumero();
+        if (solicitudId == null) {
+            System.out.println("ID inválido.");
+            return;
+        }
+
+        Solicitud solicitudEncontrada = buscarSolicitudPorId(solicitudId);
+        if (solicitudEncontrada == null) {
+            System.out.println("No existe la solicitud.");
+            return;
+        }
         System.out.print("Nuevo estado (PENDIENTE/EN_PROCESO/RESUELTA): ");
         String estado = teclado.nextLine().trim().toUpperCase();
-        if (!(estado.equals("PENDIENTE") || estado.equals("EN_PROCESO") || estado.equals("RESUELTA"))) System.out.println("Estado inválido.");
-        else { solicitud.setEstado(estado); System.out.println("Estado actualizado correctamente."); }
+        if (!(estado.equals("PENDIENTE") || estado.equals("EN_PROCESO") || estado.equals("RESUELTA"))) {
+            System.out.println("Estado inválido.");
+        } else {
+            solicitudEncontrada.setEstado(estado);
+            System.out.println("Estado actualizado correctamente.");
+        }
     }
 
     private void mostrarReporte() {
-        int pendientes = 0, enProceso = 0, resueltas = 0;
-        for (Solicitud s : solicitudes) {
-            if (s.getEstado().equals("PENDIENTE")) pendientes++;
-            if (s.getEstado().equals("EN_PROCESO")) enProceso++;
-            if (s.getEstado().equals("RESUELTA")) resueltas++;
+        int pendientes = 0;
+        int enProceso = 0;
+        int resueltas = 0;
+        for (Solicitud solicitud : solicitudes) {
+            if (solicitud.getEstado().equals("PENDIENTE")) {
+                pendientes++;
+            }
+            if (solicitud.getEstado().equals("EN_PROCESO")) {
+                enProceso++;
+            }
+            if (solicitud.getEstado().equals("RESUELTA")) {
+                resueltas++;
+            }
         }
         System.out.println("\n--- REPORTE POR ESTADO ---");
         System.out.println("PENDIENTE: " + pendientes + "\nEN_PROCESO: " + enProceso + "\nRESUELTA: " + resueltas);
