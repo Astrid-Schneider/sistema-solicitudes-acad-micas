@@ -1,41 +1,20 @@
 package ar.edu.metodologia;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Sistema {
-    private List<Estudiante> estudiantes = new ArrayList<>();
-    private List<Solicitud> solicitudes = new ArrayList<>();
-    private List<Responsable> responsables = new ArrayList<>();
+    private EstudianteService estudianteService;
+    private ResponsableService responsableService;
+    private SolicitudService solicitudService;
     private Scanner teclado = new Scanner(System.in);
-    private int proximoEstudiante = 1;
-    private int proximaSolicitud = 1;
 
-    public void cargarDatos() {
-        registrarEstudiante("Ana López", "ana.lopez@alumnos.edu.ar");
-        registrarEstudiante("Bruno Díaz", "bruno.diaz@alumnos.edu.ar");
-        registrarEstudiante("Carla Méndez", "carla.mendez@alumnos.edu.ar");
-        responsables.add(new Responsable(1, "Laura Gómez", "Alumnado"));
-        responsables.add(new Responsable(2, "Martín Ruiz", "Secretaría Académica"));
-        registrarSolicitud(1, "CERTIFICADO", "Solicita certificado de alumno regular", "MEDIA", "PENDIENTE", null);
-        registrarSolicitud(2, "EQUIVALENCIA", "Equivalencia de Programación I", "ALTA", "EN_PROCESO", responsables.get(1));
-        registrarSolicitud(3, "EXAMEN", "Inscripción fuera de término", "ALTA", "RESUELTA", responsables.get(0));
-    }
-
-    public void registrarEstudiante(String nombre, String email) {
-        estudiantes.add(new Estudiante(proximoEstudiante, nombre, email));
-        proximoEstudiante++;
-    }
-
-    public void registrarSolicitud(int estudianteId, String tipo, String descripcion, String prioridad,
-                                   String estado, Responsable responsable) {
-        Estudiante estudianteEncontrado = buscarEstudiantePorId(estudianteId);
-        if (estudianteEncontrado != null) {
-            solicitudes.add(new Solicitud(proximaSolicitud, estudianteEncontrado, tipo, descripcion,
-                    prioridad, estado, responsable));
-            proximaSolicitud++;
-        }
+    public Sistema(EstudianteService estudianteService, ResponsableService responsableService,
+                   SolicitudService solicitudService) {
+        this.estudianteService = estudianteService;
+        this.responsableService = responsableService;
+        this.solicitudService = solicitudService;
     }
 
     public void iniciar() {
@@ -95,10 +74,10 @@ public class Sistema {
         String nombre = teclado.nextLine().trim();
         System.out.print("Email: ");
         String email = teclado.nextLine().trim();
-        if (nombre.isEmpty() || email.isEmpty() || !email.contains("@")) {
+        if (!estudianteService.datosValidos(nombre, email)) {
             System.out.println("Datos inválidos. El nombre y el email son obligatorios.");
         } else {
-            registrarEstudiante(nombre, email);
+            estudianteService.registrarEstudiante(nombre, email);
             System.out.println("Estudiante registrado correctamente.");
         }
     }
@@ -112,7 +91,7 @@ public class Sistema {
             return;
         }
 
-        Estudiante estudianteEncontrado = buscarEstudiantePorId(estudianteId);
+        Estudiante estudianteEncontrado = estudianteService.buscarEstudiantePorId(estudianteId);
         if (estudianteEncontrado == null) {
             System.out.println("No existe el estudiante.");
             return;
@@ -122,19 +101,9 @@ public class Sistema {
     }
 
     private void mostrarEstudiantes() {
-        for (Estudiante estudiante : estudiantes) {
+        for (Estudiante estudiante : estudianteService.listarEstudiantes()) {
             System.out.println(estudiante);
         }
-    }
-
-    private Estudiante buscarEstudiantePorId(int estudianteId) {
-        Estudiante estudianteEncontrado = null;
-        for (Estudiante estudiante : estudiantes) {
-            if (estudiante.getId() == estudianteId) {
-                estudianteEncontrado = estudiante;
-            }
-        }
-        return estudianteEncontrado;
     }
 
     private void registrarSolicitudDesdeConsola(int estudianteId) {
@@ -143,39 +112,26 @@ public class Sistema {
         System.out.print("Descripción: ");
         String descripcion = teclado.nextLine().trim();
         System.out.print("Prioridad (BAJA/MEDIA/ALTA): ");
-        String prioridad = teclado.nextLine().trim().toUpperCase();
-        if (!datosSolicitudValidos(tipo, descripcion, prioridad)) {
+        Prioridad prioridad = Prioridad.desdeTexto(teclado.nextLine().trim().toUpperCase());
+
+        DatosSolicitud datos = new DatosSolicitud(estudianteId, tipo, descripcion, prioridad);
+        if (!datos.sonValidos()) {
             System.out.println("Tipo, descripción o prioridad inválidos.");
             return;
         }
 
-        registrarSolicitud(estudianteId, tipo, descripcion, prioridad, "PENDIENTE", null);
+        solicitudService.registrarSolicitud(datos);
         System.out.println("Solicitud registrada correctamente.");
     }
 
-    private boolean datosSolicitudValidos(String tipo, String descripcion, String prioridad) {
-        return !tipo.isEmpty()
-                && !descripcion.isEmpty()
-                && (prioridad.equals("BAJA") || prioridad.equals("MEDIA") || prioridad.equals("ALTA"));
-    }
-
     private void listarSolicitudes() {
+        List<Solicitud> solicitudes = solicitudService.listarSolicitudes();
         if (solicitudes.isEmpty()) {
             System.out.println("No hay solicitudes.");
         }
         for (Solicitud solicitud : solicitudes) {
             System.out.println(solicitud);
         }
-    }
-
-    private Solicitud buscarSolicitudPorId(int solicitudId) {
-        Solicitud solicitudEncontrada = null;
-        for (Solicitud solicitud : solicitudes) {
-            if (solicitud.getId() == solicitudId) {
-                solicitudEncontrada = solicitud;
-            }
-        }
-        return solicitudEncontrada;
     }
 
     private void consultarSolicitud() {
@@ -186,7 +142,7 @@ public class Sistema {
             return;
         }
 
-        Solicitud solicitudEncontrada = buscarSolicitudPorId(solicitudId);
+        Solicitud solicitudEncontrada = solicitudService.buscarSolicitudPorId(solicitudId);
         if (solicitudEncontrada == null) {
             System.out.println("No existe la solicitud.");
         } else {
@@ -196,31 +152,23 @@ public class Sistema {
 
     private void buscarPorEstado() {
         System.out.print("Estado (PENDIENTE/EN_PROCESO/RESUELTA): ");
-        String estadoBuscado = teclado.nextLine().trim().toUpperCase();
-        boolean haySolicitudes = false;
-        for (Solicitud solicitud : solicitudes) {
-            if (solicitud.getEstado().equals(estadoBuscado)) {
-                System.out.println(solicitud);
-                haySolicitudes = true;
-            }
-        }
-        if (!haySolicitudes) {
-            System.out.println("No se encontraron solicitudes.");
-        }
+        EstadoSolicitud estadoBuscado = EstadoSolicitud.desdeTexto(teclado.nextLine().trim().toUpperCase());
+        mostrarResultadosDeBusqueda(solicitudService.buscarPorEstado(estadoBuscado));
     }
 
     private void buscarPorTipo() {
         System.out.print("Tipo a buscar: ");
         String tipoBuscado = teclado.nextLine().trim().toUpperCase();
-        boolean haySolicitudes = false;
-        for (Solicitud solicitud : solicitudes) {
-            if (solicitud.getTipo().equals(tipoBuscado)) {
-                System.out.println(solicitud);
-                haySolicitudes = true;
-            }
-        }
-        if (!haySolicitudes) {
+        mostrarResultadosDeBusqueda(solicitudService.buscarPorTipo(tipoBuscado));
+    }
+
+    private void mostrarResultadosDeBusqueda(List<Solicitud> encontradas) {
+        if (encontradas.isEmpty()) {
             System.out.println("No se encontraron solicitudes.");
+            return;
+        }
+        for (Solicitud solicitud : encontradas) {
+            System.out.println(solicitud);
         }
     }
 
@@ -232,12 +180,11 @@ public class Sistema {
             return;
         }
 
-        Solicitud solicitudEncontrada = buscarSolicitudPorId(solicitudId);
-        if (solicitudEncontrada == null) {
+        if (solicitudService.buscarSolicitudPorId(solicitudId) == null) {
             System.out.println("No existe la solicitud.");
             return;
         }
-        for (Responsable responsable : responsables) {
+        for (Responsable responsable : responsableService.listarResponsables()) {
             System.out.println(responsable);
         }
         System.out.print("ID del responsable: ");
@@ -247,16 +194,11 @@ public class Sistema {
             return;
         }
 
-        Responsable responsableEncontrado = null;
-        for (Responsable responsable : responsables) {
-            if (responsable.getId() == responsableId) {
-                responsableEncontrado = responsable;
-            }
-        }
+        Responsable responsableEncontrado = responsableService.buscarResponsablePorId(responsableId);
         if (responsableEncontrado == null) {
             System.out.println("No existe el responsable.");
         } else {
-            solicitudEncontrada.setResponsable(responsableEncontrado);
+            solicitudService.asignarResponsable(solicitudId, responsableEncontrado);
             System.out.println("Responsable asignado correctamente.");
         }
     }
@@ -269,38 +211,26 @@ public class Sistema {
             return;
         }
 
-        Solicitud solicitudEncontrada = buscarSolicitudPorId(solicitudId);
-        if (solicitudEncontrada == null) {
+        if (solicitudService.buscarSolicitudPorId(solicitudId) == null) {
             System.out.println("No existe la solicitud.");
             return;
         }
         System.out.print("Nuevo estado (PENDIENTE/EN_PROCESO/RESUELTA): ");
-        String estado = teclado.nextLine().trim().toUpperCase();
-        if (!(estado.equals("PENDIENTE") || estado.equals("EN_PROCESO") || estado.equals("RESUELTA"))) {
+        EstadoSolicitud nuevoEstado = EstadoSolicitud.desdeTexto(teclado.nextLine().trim().toUpperCase());
+        if (nuevoEstado == null) {
             System.out.println("Estado inválido.");
         } else {
-            solicitudEncontrada.setEstado(estado);
+            solicitudService.cambiarEstado(solicitudId, nuevoEstado);
             System.out.println("Estado actualizado correctamente.");
         }
     }
 
     private void mostrarReporte() {
-        int pendientes = 0;
-        int enProceso = 0;
-        int resueltas = 0;
-        for (Solicitud solicitud : solicitudes) {
-            if (solicitud.getEstado().equals("PENDIENTE")) {
-                pendientes++;
-            }
-            if (solicitud.getEstado().equals("EN_PROCESO")) {
-                enProceso++;
-            }
-            if (solicitud.getEstado().equals("RESUELTA")) {
-                resueltas++;
-            }
-        }
+        Map<EstadoSolicitud, Integer> cantidadesPorEstado = solicitudService.contarPorEstado();
         System.out.println("\n--- REPORTE POR ESTADO ---");
-        System.out.println("PENDIENTE: " + pendientes + "\nEN_PROCESO: " + enProceso + "\nRESUELTA: " + resueltas);
-        System.out.println("TOTAL: " + solicitudes.size());
+        for (EstadoSolicitud estado : EstadoSolicitud.values()) {
+            System.out.println(estado + ": " + cantidadesPorEstado.get(estado));
+        }
+        System.out.println("TOTAL: " + solicitudService.contarTotal());
     }
 }
