@@ -47,12 +47,13 @@ Para las pruebas usamos datos ficticios, por ejemplo, "Estudiante Prueba". En to
 
 En la columna "Resultado obtenido", **OK** indica que comprobamos el resultado esperado durante la ejecución de las pruebas con JUnit 5.
 
-### Pruebas que documentan limitaciones conocidas
+### Prueba que documenta una limitación conocida
 
 - `nombreConSoloEspaciosPasaLaValidacionDelServicio`: comprobamos que `EstudianteService.datosValidos("   ", ...)` devuelve `true`. La consola aplica `trim()` antes y por eso no permite cargar ese nombre desde el menú, pero el servicio por sí solo no lo impide.
-- `datosSolicitudConTipoNullLanzaExcepcion`: comprobamos que `DatosSolicitud.sonValidos()` lanza `NullPointerException` cuando el tipo es `null`.
 
-Que estas pruebas aprueben significa que confirmamos el comportamiento actual, no que lo consideremos correcto o deseable. No indican que hayamos corregido esas limitaciones. Si en el futuro se corrigen, también tendremos que actualizar las pruebas.
+Que esta prueba apruebe significa que confirmamos el comportamiento actual, no que lo consideremos correcto o deseable. Si en el futuro corregimos esta limitación, también tendremos que actualizar la prueba.
+
+Después del code review corregimos el caso del tipo nulo. La prueba ahora se llama `datosSolicitudConTipoNullEsInvalido` y comprueba que `DatosSolicitud.sonValidos()` devuelve `false` cuando `tipo` es `null`, en lugar de esperar una excepción.
 
 ## 3. Resultados de ejecución
 

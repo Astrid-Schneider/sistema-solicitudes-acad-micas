@@ -1,6 +1,6 @@
 # Code review del Sistema de Gestión de Solicitudes Académicas
 
-Revisamos la versión actual del sistema, que incluye las mejoras de organización y refactoring realizadas por el equipo. Leímos las 14 clases de `src/main/java/ar/edu/metodologia`, ejecutamos el sistema por consola y desarrollamos pruebas automatizadas. No modificamos el código de producción como parte de esta revisión.
+Revisamos la versión actual del sistema, que incluye las mejoras de organización y refactoring realizadas por el equipo. Leímos las 14 clases de `src/main/java/ar/edu/metodologia`, ejecutamos el sistema por consola y desarrollamos pruebas automatizadas. No modificamos el código de producción como parte de esta revisión. Después del code review, corregimos el problema detectado cuando el tipo de una solicitud era `null`; registramos esa corrección en el commit `22476dd`.
 
 ## 1. Checklist técnico
 
@@ -11,7 +11,7 @@ Revisamos la versión actual del sistema, que incluye las mejoras de organizaci�
 | 3 | Ausencia de duplicación innecesaria | **Cumple parcialmente** | Se eliminó gran parte de la duplicación inicial. Todavía encontramos repetido cuatro veces en `Sistema` el bloque para pedir un ID, llamar a `leerNumero()` y mostrar "ID inválido.". También se repite la búsqueda por ID en `EstudianteService`, `ResponsableService` y `SolicitudRepositorioEnMemoria`, además de `desdeTexto` en los dos enums. |
 | 4 | Aplicación de SOLID cuando corresponda | **Cumple parcialmente** | Respecto de responsabilidad única, comprobamos que los servicios están separados por tema. En inversión de dependencias, `SolicitudService` depende de la interfaz `SolicitudRepositorio`. Como aspectos pendientes, `Sistema` y `SolicitudService` dependen de las clases concretas `EstudianteService` y `ResponsableService`, y `ejecutarOpcion` usa una cadena de `if/else if` que debe modificarse cada vez que se agrega una opción. |
 | 5 | Separación entre consola y lógica | **Cumple parcialmente** | Los servicios no usan `System.out` ni `Scanner`, lo que consideramos una mejora importante. Sin embargo, `Sistema` crea internamente su propio `Scanner(System.in)`, por lo que no podemos inyectar otra entrada directamente. Para probarlo tuvimos que reemplazar `System.in` antes de construirlo. Además, `Sistema` decide la validación del estudiante antes de llamar a `registrarEstudiante`. |
-| 6 | Validaciones y manejo de errores | **Requiere mejora** | Observamos que varios errores se informan mediante `null` o `false`, sin indicar el motivo. `registrarEstudiante` no valida por sí mismo y `datosValidos` solo comprueba que el email contenga `@`. `sonValidos()` lanza `NullPointerException` si el tipo es `null`. Tampoco hay control de duplicados ni reglas para las transiciones de estado. |
+| 6 | Validaciones y manejo de errores | **Requiere mejora** | Observamos que varios errores se informan mediante `null` o `false`, sin indicar el motivo. `registrarEstudiante` no valida por sí mismo y `datosValidos` solo comprueba que el email contenga `@`. Después del code review corregimos `sonValidos()` para que devuelva `false` si el tipo es `null`, como consta en el commit `22476dd`. Todavía no hay control de duplicados ni reglas para las transiciones de estado. |
 | 7 | Uso correcto de enums | **Cumple parcialmente** | `EstadoSolicitud` y `Prioridad` reemplazan los `String` de la versión inicial, y `contarPorEstado()` usa `EnumMap`. Sin embargo, el tipo de solicitud sigue siendo un `String` libre aunque el menú ofrezca cuatro valores, por lo que actualmente se puede registrar un tipo como "XYZ". |
 | 8 | Uso adecuado de servicios y repositorios | **Cumple parcialmente** | Las solicitudes cuentan con una interfaz de repositorio y una implementación en memoria. En cambio, estudiantes y responsables guardan sus listas dentro del servicio, lo que genera una organización inconsistente. Además, los métodos `listar*` devuelven las listas internas y permiten que se modifiquen desde afuera. |
 | 9 | Legibilidad y facilidad de mantenimiento | **Cumple** | Consideramos que el código es corto, ordenado y fácil de seguir. `Main` permite comprender con claridad cómo se construyen los objetos. Como detalle menor, algunos atributos podrían declararse `final` porque no cambian. |
@@ -29,6 +29,7 @@ Comprobamos las siguientes mejoras mediante la lectura del código, las pruebas 
 - El reporte usa `EnumMap` y obtiene el total mediante `contarTotal()`.
 - Verificamos que el comportamiento original se mantiene: usamos el mismo guion de teclado, obtuvimos las mismas 394 líneas de salida y conservamos los mismos datos iniciales.
 - Ejecutamos las 66 pruebas con JUnit 5, usando Java 21 y el objetivo Maven `test` desde IntelliJ IDEA. El resultado del 07/11/2026 fue **BUILD SUCCESS**, sin fallos, errores ni pruebas omitidas.
+- Después del code review corregimos la validación de `DatosSolicitud`: cuando `tipo` es `null`, `sonValidos()` ahora devuelve `false` en lugar de lanzar `NullPointerException`. La corrección quedó registrada en el commit `22476dd`.
 
 ## 3. Problemas pendientes y recomendaciones
 
@@ -49,7 +50,7 @@ Aunque todas las pruebas finalizaron correctamente, no consideramos que el siste
 | Baja | No hay reglas de transición de estado | Definir si una solicitud RESUELTA puede volver a PENDIENTE y validar la regla elegida. |
 | Baja | No medimos la cobertura | Incorporar JaCoCo en una mejora futura; no lo agregamos porque no era necesario para esta entrega. |
 
-Las pruebas `nombreConSoloEspaciosPasaLaValidacionDelServicio` y `datosSolicitudConTipoNullLanzaExcepcion` dejan registradas dos limitaciones conocidas. Que ambas aprueben confirma el comportamiento actual, pero no significa que lo consideremos correcto o deseable. Si decidimos corregir esos comportamientos en el futuro, también tendremos que actualizar las pruebas.
+La prueba `nombreConSoloEspaciosPasaLaValidacionDelServicio` deja registrada una limitación conocida. Que apruebe confirma el comportamiento actual, pero no significa que lo consideremos correcto o deseable. La prueba del tipo nulo ya no representa una limitación pendiente: después del code review la actualizamos como `datosSolicitudConTipoNullEsInvalido` para comprobar que `sonValidos()` devuelve `false`.
 
 ## 4. Criterios de aceptación técnica
 
