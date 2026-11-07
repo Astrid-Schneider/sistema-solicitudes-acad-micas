@@ -59,12 +59,10 @@ class ModeloYEnumsTest {
     }
 
     @Test
-    @DisplayName("Limitación conocida: DatosSolicitud con tipo null lanza NullPointerException")
-    void datosSolicitudConTipoNullLanzaExcepcion() {
-        // Hoy la consola nunca manda null, pero el método no se protege.
-        // Se documenta el comportamiento actual (ver docs/code-review.md).
+    @DisplayName("DatosSolicitud con tipo null es inválido")
+    void datosSolicitudConTipoNullEsInvalido() {
         DatosSolicitud datos = new DatosSolicitud(1, null, "Descripción", Prioridad.BAJA);
-        assertThrows(NullPointerException.class, datos::sonValidos);
+        assertFalse(datos.sonValidos());
     }
 
     @Test

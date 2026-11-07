@@ -14,7 +14,7 @@ public class DatosSolicitud {
     }
 
     public boolean sonValidos() {
-        return !tipo.isEmpty() && !descripcion.isEmpty() && prioridad != null;
+        return tipo != null && !tipo.isEmpty() && !descripcion.isEmpty() && prioridad != null;
     }
 
     public int getEstudianteId() { return estudianteId; }
