@@ -1,112 +1,107 @@
 # Pruebas del Sistema de Gestión de Solicitudes Académicas
 
-Rama: `feature/rodri-pruebas` (creada desde `main`, que ya incluye los merges de Tomás y Nazareno).
-Comparación contra el tag `estado-inicial` (commit `46003e9`).
+Comparamos la versión actual con el tag `estado-inicial` (commit `46003e9`) para comprobar que el refactoring mantuviera las funcionalidades originales.
 
-## 1. Qué se agregó para probar
+## 1. Qué agregamos para probar
 
-- En `pom.xml` se agregó **solo** JUnit 5 (`junit-jupiter 5.10.2`, scope `test`) y el plugin `maven-surefire-plugin 3.2.5`, que hace falta para que Maven ejecute JUnit 5.
-- Se crearon las pruebas en `src/test/java/ar/edu/metodologia/`.
-- No se tocó ningún archivo de `src/main` ni el `README.md`.
+- En `pom.xml` agregamos JUnit 5 (`junit-jupiter 5.10.2`, con alcance `test`) y el plugin `maven-surefire-plugin 3.2.5`, necesario para ejecutar las pruebas con Maven.
+- Creamos las pruebas en `src/test/java/ar/edu/metodologia/`.
+- No modificamos ningún archivo de `src/main` ni el `README.md` al incorporar las pruebas.
 
 | Archivo de prueba | Qué cubre | Cantidad |
 |---|---|---|
-| `EstudianteServiceTest` | Registro, IDs, validación de datos, sin datos | 9 |
-| `SolicitudServiceTest` | Alta, rechazos, búsquedas, responsables, estados, reporte, sin datos | 27 |
-| `ResponsableServiceTest` | Alta y búsqueda de responsables, inexistentes, sin datos | 3 |
-| `ModeloYEnumsTest` | `EstadoSolicitud`, `Prioridad`, `DatosSolicitud`, `Solicitud.toString` | 8 |
-| `SistemaConsolaTest` | El menú por consola, simulando el teclado con `System.in` | 18 |
-| `DatosInicialesTest` | Que los datos de ejemplo sean los mismos que en la versión inicial | 1 |
+| `EstudianteServiceTest` | Registro, IDs, validación de datos y casos sin datos | 9 |
+| `SolicitudServiceTest` | Alta, rechazos, búsquedas, responsables, estados, reporte y casos sin datos | 27 |
+| `ResponsableServiceTest` | Alta y búsqueda de responsables, inexistentes y casos sin datos | 3 |
+| `ModeloYEnumsTest` | `EstadoSolicitud`, `Prioridad`, `DatosSolicitud` y `Solicitud.toString` | 8 |
+| `SistemaConsolaTest` | Menú por consola, simulando el teclado con `System.in` | 18 |
+| `DatosInicialesTest` | Verificación de que los datos de ejemplo sean los mismos que en la versión inicial | 1 |
 | **Total** | | **66** |
 
 ## 2. Casos de prueba
 
-Las pruebas usan datos inventados (por ejemplo "Estudiante Prueba"). Todas comprueban resultados con `assert`, no solo ejecutan métodos.
+Para las pruebas usamos datos ficticios, por ejemplo, "Estudiante Prueba". En todos los casos comprobamos los resultados con aserciones; no nos limitamos a ejecutar los métodos.
 
-| N.º | Requisito | Caso | Resultado esperado | Resultado obtenido* |
+| N.º | Requisito | Caso | Resultado esperado | Resultado obtenido |
 |---|---|---|---|---|
 | 1 | Registro correcto de estudiantes | Registrar un estudiante válido | Queda en la lista con nombre, email e ID 1 | OK |
 | 1 | | Registrar tres estudiantes | IDs 1, 2 y 3 | OK |
-| 2 | Estudiantes inválidos | Nombre vacío / email vacío / email sin `@` | `datosValidos` devuelve `false` | OK |
-| 2 | | Por consola, email sin `@` o nombre con solo espacios | Mensaje "Datos inválidos…" y no se guarda | OK |
-| 3 | Solicitud con estudiante existente | Registrar solicitud del estudiante 2 | Se crea con ID 1, estado PENDIENTE y sin responsable | OK |
-| 4 | Solicitudes inválidas | Estudiante inexistente, tipo vacío, descripción vacía, prioridad nula | Devuelve `null` y no se guarda | OK |
-| 4 | | Un rechazo no consume el siguiente ID | La solicitud válida siguiente tiene ID 1 | OK |
-| 4 | | Por consola: estudiante inexistente, ID no numérico, prioridad inválida | Mensaje de error y no se guarda | OK |
-| 5 | Buscar por ID | ID existente / inexistente | Devuelve la solicitud / `null` | OK |
-| 6 | Buscar por estado y tipo | Una solicitud en cada estado; dos de tipo EXAMEN | Cada búsqueda devuelve las que corresponden | OK |
-| 6 | | Sin coincidencias, tipo en minúscula, estado `null` | Lista vacía | OK |
+| 2 | Estudiantes inválidos | Nombre vacío, email vacío o email sin `@` | `datosValidos` devuelve `false` | OK |
+| 2 | | Por consola, email sin `@` o nombre con solo espacios | Se muestra "Datos inválidos…" y no se guarda | OK |
+| 3 | Solicitud con estudiante existente | Registrar una solicitud del estudiante 2 | Se crea con ID 1, estado PENDIENTE y sin responsable | OK |
+| 4 | Solicitudes inválidas | Estudiante inexistente, tipo vacío, descripción vacía o prioridad nula | Devuelve `null` y no se guarda | OK |
+| 4 | | Un rechazo no consume el siguiente ID | La siguiente solicitud válida tiene ID 1 | OK |
+| 4 | | Por consola: estudiante inexistente, ID no numérico o prioridad inválida | Se muestra un mensaje de error y no se guarda | OK |
+| 5 | Buscar por ID | ID existente o inexistente | Devuelve la solicitud o `null` | OK |
+| 6 | Buscar por estado y tipo | Una solicitud en cada estado y dos de tipo EXAMEN | Cada búsqueda devuelve las solicitudes correspondientes | OK |
+| 6 | | Sin coincidencias, tipo en minúscula o estado `null` | Lista vacía | OK |
 | 7 | Asignar responsable | Asignar y reasignar | Queda el último responsable asignado | OK |
-| 8 | Inexistentes | Solicitud inexistente / responsable `null` | Devuelve `false` y no cambia nada | OK |
-| 8 | | Buscar responsable inexistente | Devuelve `null` | OK |
+| 8 | Inexistentes | Solicitud inexistente o responsable `null` | Devuelve `false` y no cambia nada | OK |
+| 8 | | Buscar un responsable inexistente | Devuelve `null` | OK |
 | 9 | Cambiar estado | PENDIENTE → EN_PROCESO → RESUELTA | El estado cambia en cada paso | OK |
-| 10 | Estados inválidos | Estado `null`, "CANCELADA", "pendiente", vacío | `false` / `null`, la solicitud no cambia | OK |
-| 11 | Reporte por estado | 4 solicitudes repartidas en estados | Contadores 1 / 1 / 2 y total 4; la suma coincide | OK |
-| 12 | Sin datos | Sin estudiantes, solicitudes ni responsables | Listas vacías, búsquedas en `null`, reporte en 0 | OK |
-| 12 | | Por consola sin datos | "No hay solicitudes." y reporte en 0 | OK |
-| – | Datos de ejemplo | Cargar `DatosIniciales` | 3 estudiantes, 2 responsables, 3 solicitudes con los mismos estados | OK |
+| 10 | Estados inválidos | Estado `null`, "CANCELADA", "pendiente" o vacío | Devuelve `false` o `null`, y la solicitud no cambia | OK |
+| 11 | Reporte por estado | Cuatro solicitudes repartidas en estados | Contadores 1 / 1 / 2 y total 4; la suma coincide | OK |
+| 12 | Sin datos | Sin estudiantes, solicitudes ni responsables | Listas vacías, búsquedas en `null` y reporte en 0 | OK |
+| 12 | | Por consola sin datos | Se muestra "No hay solicitudes." y el reporte queda en 0 | OK |
+| – | Datos de ejemplo | Cargar `DatosIniciales` | Tres estudiantes, dos responsables y tres solicitudes con los mismos estados | OK |
 
-\* "OK" = resultado obtenido en la corrida con el mini-runner descripto en la sección 3. **No** es todavía el resultado de `mvn clean test`; ver más abajo.
+En la columna "Resultado obtenido", **OK** indica que comprobamos el resultado esperado durante la ejecución de las pruebas con JUnit 5.
 
-### Dos pruebas que documentan limitaciones (no son errores corregidos)
+### Pruebas que documentan limitaciones conocidas
 
-- `nombreConSoloEspaciosPasaLaValidacionDelServicio`: `EstudianteService.datosValidos("   ", ...)` devuelve `true`. La consola hace `trim()` antes, por eso desde el menú no se puede cargar, pero el servicio por sí solo no lo protege.
-- `datosSolicitudConTipoNullLanzaExcepcion`: `DatosSolicitud.sonValidos()` lanza `NullPointerException` si el tipo es `null`.
+- `nombreConSoloEspaciosPasaLaValidacionDelServicio`: comprobamos que `EstudianteService.datosValidos("   ", ...)` devuelve `true`. La consola aplica `trim()` antes y por eso no permite cargar ese nombre desde el menú, pero el servicio por sí solo no lo impide.
+- `datosSolicitudConTipoNullLanzaExcepcion`: comprobamos que `DatosSolicitud.sonValidos()` lanza `NullPointerException` cuando el tipo es `null`.
 
-Si se corrigen estos comportamientos, estas dos pruebas tienen que actualizarse.
+Que estas pruebas aprueben significa que confirmamos el comportamiento actual, no que lo consideremos correcto o deseable. No indican que hayamos corregido esas limitaciones. Si en el futuro se corrigen, también tendremos que actualizar las pruebas.
 
-## 3. Resultados de ejecución (lo que realmente se pudo verificar)
+## 3. Resultados de ejecución
 
-### Qué se pudo y qué no
+Inicialmente tuvimos dificultades para ejecutar Maven debido a restricciones del entorno, que impedían descargar desde Maven Central los plugins y las dependencias necesarias. Más adelante pudimos realizar la ejecución correctamente desde el panel Maven de IntelliJ IDEA, usando el objetivo `test`.
 
-| Verificación | Estado |
+La ejecución real se realizó el **07/11/2026**, con **Java 21** y **JUnit 5**. Obtuvimos los siguientes resultados:
+
+| Dato | Resultado |
 |---|---|
-| Compilar con Java 21 (`javac --release 21`), versión final | Se pudo: sin errores |
-| Compilar con Java 21 (`javac --release 21`), versión inicial (tag) | Se pudo: sin errores |
-| Ejecutar las 66 pruebas con un mini-runner propio | Se pudo: **66 ejecutadas, 66 aprobadas, 0 fallidas** |
-| Ejecutar el sistema por consola con un guion de teclado | Se pudo |
-| Comparar consola final vs. `estado-inicial` | Se pudo: salidas idénticas |
-| **`mvn clean test` con JUnit 5 real** | **No se pudo en el entorno donde se trabajó** |
+| Objetivo Maven ejecutado | `test` |
+| Tests run | **66** |
+| Failures | **0** |
+| Errors | **0** |
+| Skipped | **0** |
+| Resultado de la compilación | **BUILD SUCCESS** |
 
-**Por qué no se pudo correr Maven:** el entorno donde se prepararon las pruebas no tiene acceso a Maven Central (el proxy respondió `403` al intentar bajar `repo.maven.apache.org`), así que Maven no pudo descargar ni siquiera sus plugins básicos ni JUnit. No se usó ningún atajo para saltear esa restricción.
+Con estos resultados comprobamos que las 66 pruebas finalizaron correctamente, sin fallos, errores ni pruebas omitidas.
 
-**Qué es el mini-runner:** un programa chiquito, descartable y fuera del repositorio, que imita las anotaciones (`@Test`, `@BeforeEach`, `@AfterEach`, `@DisplayName`) y las aserciones usadas. Sirve para detectar errores de lógica en las pruebas, pero **no reemplaza a JUnit**. Los números de arriba (66/66) salen de ese runner.
+Además, durante la preparación de las pruebas realizamos otras verificaciones complementarias:
 
-### Resultado de `mvn clean test`
-
-> **PENDIENTE: completar con la ejecución real en IntelliJ o en la terminal.**
->
-> | Dato | Valor real |
-> |---|---|
-> | Tests run | ___ |
-> | Failures | ___ |
-> | Errors | ___ |
-> | Skipped | ___ |
-> | BUILD | ___ |
-
-Se espera `Tests run: 66, Failures: 0, Errors: 0, Skipped: 0` y `BUILD SUCCESS`, pero eso es una expectativa y no un resultado hasta que se ejecute.
+| Verificación | Resultado |
+|---|---|
+| Compilar con Java 21 (`javac --release 21`), versión actual | Sin errores |
+| Compilar con Java 21 (`javac --release 21`), versión inicial | Sin errores |
+| Ejecutar el sistema por consola con un guion de teclado | Ejecución correcta |
+| Comparar la consola actual con `estado-inicial` | Salidas idénticas |
 
 ## 4. Comparación antes y después
 
-Se compilaron las dos versiones con Java 21 y se les pasó el **mismo guion de teclado** (63 líneas de entrada): listar, consultar por ID (existente, inexistente y texto), buscar por estado y tipo (con y sin resultados), registrar estudiantes (válido, sin `@`, nombre vacío), registrar solicitudes (válida, estudiante inexistente, ID no numérico, prioridad inválida), asignar responsable (válido, responsable inexistente, solicitud inexistente, ID no numérico), cambiar estado (válido, inválido, solicitud inexistente), reporte, opción inválida y texto no numérico en el menú.
+Compilamos las dos versiones con Java 21 y usamos el mismo guion de teclado, de 63 líneas de entrada. Incluimos operaciones para listar, consultar por ID, buscar por estado y tipo, registrar estudiantes y solicitudes, asignar responsables, cambiar estados, mostrar el reporte y probar entradas inválidas.
 
-| Aspecto | `estado-inicial` | `feature/rodri-pruebas` (main + pruebas) |
+| Aspecto | `estado-inicial` | Versión actual con mejoras y pruebas |
 |---|---|---|
-| Archivos de producción | 5 (casi todo en `Sistema`) | 14 (servicios, repositorio, enums, `DatosSolicitud`) |
+| Archivos de producción | 5, con casi todo concentrado en `Sistema` | 14, organizados en servicios, repositorio, enums y `DatosSolicitud` |
 | Compila con Java 21 | Sí | Sí |
-| Salida por consola con el guion | 394 líneas | 394 líneas, **idénticas** (comparado con `diff`) |
-| Datos de ejemplo | 3 / 2 / 3 | 3 / 2 / 3, mismos estados y responsables |
+| Salida por consola con el guion | 394 líneas | 394 líneas idénticas, comparadas con `diff` |
+| Datos de ejemplo | 3 estudiantes, 2 responsables y 3 solicitudes | Las mismas cantidades, estados y responsables |
 | Pruebas automatizadas | 0 | 66 |
 
-**Diferencias de comportamiento encontradas: ninguna.** El refactoring de Tomás y Nazareno mantuvo el funcionamiento visible.
+No encontramos diferencias en el comportamiento visible. De esta manera, comprobamos que el refactoring y las mejoras de calidad interna mantuvieron las funcionalidades de la versión inicial.
 
-Una coincidencia que conviene saber: si el teclado se cierra sin ingresar `0` (fin de entrada), **las dos versiones** terminan con `NoSuchElementException`. No es una regresión, venía de la versión inicial.
+También observamos una limitación compartida por ambas versiones: si se cierra la entrada sin ingresar `0`, el programa termina con `NoSuchElementException`. No se trata de una regresión introducida por las mejoras, ya que este comportamiento ya existía en la versión inicial.
 
-## 5. Cómo reproducirlo
+## 5. Cómo reproducir las pruebas
 
-```bash
-mvn clean test
+Desde el panel Maven de IntelliJ IDEA, seleccionamos el objetivo:
+
+```text
+test
 ```
 
-o en IntelliJ: clic derecho sobre `src/test/java` → *Run 'All Tests'*.
-Para ejecutar el sistema: `mvn compile exec:java`.
+También podemos ejecutarlas desde IntelliJ haciendo clic derecho sobre `src/test/java` y seleccionando *Run 'All Tests'*. Para ejecutar el sistema podemos usar `mvn compile exec:java`.
